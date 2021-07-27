@@ -20,7 +20,8 @@ def extract_audio(video_file, sample_rate, audio_folder):
 
 video_path = "C:/Users/iggym/Documents/Movies/Baby Driver (2017) [YTS.AG]/Baby.Driver.2017.720p.BluRay.x264-[YTS.AG].mp4"
 audio_path = "baby_driver_audio"
+sample_rate = 44100
 
-audio = extract_audio(video_path, 8192, audio_path)
+audio = extract_audio(video_path, sample_rate, audio_path)
 
 print(f"Audio extracted: {audio}")
