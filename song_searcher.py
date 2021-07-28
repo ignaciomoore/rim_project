@@ -7,17 +7,17 @@ import datetime
 import matplotlib.pyplot as plt
 
 
-opening_song_file = "opening_song_descriptors.bin"
-debra_song_file = "debra_song_descriptors.bin"
-song_descriptors_file = opening_song_file
+opening_song_descriptors_file = "opening_song_descriptors.bin"
+debra_song_descriptors_file = "debra_song_descriptors.bin"
+song_descriptors_file = opening_song_descriptors_file  # <- change here
 
 movie_audio_descriptors_file = "baby_driver_audio_descriptors.bin"
 
 
 opening_song_shape = (3416, 32)
-debra_song_shape = ()
+debra_song_shape = (3698, 32)
 
-song_shape = opening_song_shape
+song_shape = opening_song_shape # <- change here
 movie_audio_shape = (72780, 32)
 
 """
@@ -121,13 +121,13 @@ min_2_dist = distances[distances > minimum_distance].min()
 loc_2 = numpy.where(distances == min_2_dist)
 print(f"Dist = {min_2_dist}, loc = {loc_2}")
 """
-threshold = 0
-seconds = 5
-seq_len = descriptor_seconds(seconds, 44100, 4096)
-print(seq_len)
-acc_max_dif = 250
+minimum_distance_threshold = 0
+seq_seconds = 5
+seq_len = descriptor_seconds(seq_seconds, sample_rate=44100, window=4096)
+print(f"{seq_len} descriptors in the sequence")
+maximum_accepted_distance = 500
 
-min_dist, neigh_coords_list, attempts = get_min_dist_seq(distances, threshold, seq_len, acc_max_dif, 1)
+min_dist, neigh_coords_list, attempts = get_min_dist_seq(distances, minimum_distance_threshold, seq_len, maximum_accepted_distance, 1)
 print(f"Min Dist {min_dist} | Num Attempts {attempts}")
 for cord in neigh_coords_list:
         print(f"{cord} | {audio_second(44100, 4096, cord[0])} song sec | {audio_second(44100, 4096, cord[1])} movie sec")

@@ -16,10 +16,11 @@ def get_descriptors(video_file, sample_rate, dimension, window, hop, audio_folde
     return descriptors
 """
 
-# audio_file = "baby_driver_audio.44100.wav"
-# audio_file = "C:/Users/iggym/Documents/Movies/Baby Driver (2017) [YTS.AG]/Soundtrack/Jon Spencer Blues Explosion - Bell Bottoms ( Baby driver soundtrack).mp3"
-# audio_file = "opening_song.44100.wav"
-audio_file = sys.argv[1]
+baby_driver_audio_file = "baby_driver_audio.44100.wav"
+debra_song_audio_file = "debra_song.44100.wav"
+opening_song_audio_file = "opening_song.44100.wav"
+# audio_file = sys.argv[1]
+audio_file = debra_song_audio_file  # <- change here
 
 sample_rate = 44100
 window = 4096
@@ -32,7 +33,9 @@ t1 = time.time()
 print(t1 - t0)
 print(descriptors.shape)
 
-# descriptors_file = "opening_song_descriptors.bin"
-# descriptors_file = "opening_song_descriptors.bin"
-descriptors_file = sys.argv[2]
+baby_driver_descriptors_file = "baby_driver_audio_descriptors.bin"
+opening_song_descriptors_file = "opening_song_descriptors.bin"
+debra_song_descriptors_file = "debra_song_descriptors.bin"
+# descriptors_file = sys.argv[2]
+descriptors_file = debra_song_audio_file  # <- change here
 descriptors.tofile(descriptors_file, sep="\n")

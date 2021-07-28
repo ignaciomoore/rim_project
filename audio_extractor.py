@@ -2,7 +2,6 @@
 import sys
 import os
 import subprocess
-import librosa
 
 
 def extract_audio(video_file, sample_rate, audio_folder):
