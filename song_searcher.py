@@ -17,7 +17,7 @@ movie_audio_descriptors_file = "baby_driver_audio_descriptors.bin"
 opening_song_shape = (3416, 32)
 debra_song_shape = (3698, 32)
 
-song_shape = opening_song_shape # <- change here
+song_shape = opening_song_shape  # <- change here
 movie_audio_shape = (72780, 32)
 
 """
@@ -48,6 +48,7 @@ def get_k_smallest_distance(k, distances, min_dist, current_k):
     new_min_dist = distances[distances > min_dist].min()
     return numpy.append(new_min_dist, get_k_smallest_distance(k, distances, new_min_dist, current_k + 1))
 
+
 """
 t5 = time.time()
 minimum_distance = numpy.amin(distances)
@@ -55,8 +56,9 @@ minimum_distance = numpy.amin(distances)
 t6 = time.time()
 location = numpy.where(distances == numpy.amin(distances))
 t7 = time.time()
-
 """
+
+
 def audio_second(sample_rate, window, descriptor_index):  # if hop == window
     return str(datetime.timedelta(seconds=round((1/sample_rate)*window*descriptor_index)))
 
@@ -84,7 +86,7 @@ def get_neigh_dists(coords, distances, min_dist, num_neighs, iprint=True):
     neigh_coords_list = [coords]
     for i in range(num_neighs)[1:]:
         if coords[0]+i == distances.shape[0] or coords[1]+i == distances.shape[1]:
-            print("Not enough space for more neigbours")
+            print("Not enough space for more neighbours")
             break
         neigh_dists.append(distances[coords[0]+i][coords[1]+i])
         neigh_coords_list.append((coords[0]+i, coords[1]+i))
@@ -95,6 +97,7 @@ def get_neigh_dists(coords, distances, min_dist, num_neighs, iprint=True):
         print(f"Max diff {round(max_dist_dif, 2)} | {round(t1-t0, 2)} secs")
     return max_dist_dif, neigh_coords_list
 
+
 def get_min_dist_seq(distances, min_dist, seq_len, max_acc_dif, iteration, iprint=True): #
     t0 = time.time()
     new_min_dist, listOfCordinates = get_min_dist(distances, min_dist, iprint=False)
@@ -103,7 +106,7 @@ def get_min_dist_seq(distances, min_dist, seq_len, max_acc_dif, iteration, iprin
     if max_dist_dif <= max_acc_dif and len(neigh_coords_list) == seq_len:
         return new_min_dist, neigh_coords_list, iteration
     print(f"Seq attempt number {iteration}", end="\r")
-    min_dist, neigh_coords_list, attempts = get_min_dist_seq(distances, new_min_dist, seq_len, max_acc_dif, iteration+1) #
+    min_dist, neigh_coords_list, attempts = get_min_dist_seq(distances, new_min_dist, seq_len, max_acc_dif, iteration+1)
     return min_dist, neigh_coords_list, attempts
 
 
@@ -130,7 +133,7 @@ maximum_accepted_distance = 500
 min_dist, neigh_coords_list, attempts = get_min_dist_seq(distances, minimum_distance_threshold, seq_len, maximum_accepted_distance, 1)
 print(f"Min Dist {min_dist} | Num Attempts {attempts}")
 for cord in neigh_coords_list:
-        print(f"{cord} | {audio_second(44100, 4096, cord[0])} song sec | {audio_second(44100, 4096, cord[1])} movie sec")
+    print(f"{cord} | {audio_second(44100, 4096, cord[0])} song sec | {audio_second(44100, 4096, cord[1])} movie sec")
 
 """
 t20 = time.time()
