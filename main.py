@@ -5,11 +5,13 @@ from scipy.spatial import distance
 
 from duplicate_searcher import Candidate
 
+
+
 if __name__ == "__main__":
-    debra_song_descriptors_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/debra_song_descriptors.bin"
+    debra_song_descriptors_file = "debra_song_descriptors.bin"
     song_descriptors_file = debra_song_descriptors_file  # <- change here
 
-    movie_audio_descriptors_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/baby_driver_audio_descriptors.bin"
+    movie_audio_descriptors_file = "baby_driver_audio_descriptors.bin"
     debra_song_shape = (3434, 32)
 
     song_shape = debra_song_shape  # <- change here
@@ -26,3 +28,9 @@ if __name__ == "__main__":
     t0 = time.time()
     distances = distance.cdist(song_descriptors, movie_audio_descriptors)
     t1 = time.time()
+
+    number_of_neighbours = 5
+
+    for song_descriptor in distances:
+
+        close_neighbours = numpy.argpartition(song_descriptors, number_of_neighbours)[:number_of_neighbours]

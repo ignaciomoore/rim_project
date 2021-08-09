@@ -29,8 +29,8 @@ baby_driver_audio_file = "C:/Users/iggym/Documents/Recuperacion de Informacion M
 debra_song_video_file = "C:/Users/iggym/Documents/Movies/Baby Driver (2017) [YTS.AG]/Soundtrack/[ONTIVA.COM] Debra-144p.mp4"
 debra_song_audio_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/debra_song"
 
-video_path = baby_driver_video_file  # <- change here
-audio_path = baby_driver_audio_file  # <- change here
+video_path = debra_song_video_file  # <- change here
+audio_path = debra_song_audio_file  # <- change here
 
 sample_rate = 22000  # <- change here
 

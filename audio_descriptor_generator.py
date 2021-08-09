@@ -19,7 +19,7 @@ def get_descriptors(video_file, sample_rate, dimension, window, hop, audio_folde
 """
 
 baby_driver_audio_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/baby_driver_audio.22000.wav"
-debra_song_audio_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/debra_song.22000.wav"
+debra_song_audio_file = "debra_song.22000.wav"
 opening_song_audio_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/opening_song.44100.wav"
 # audio_file = sys.argv[1]
 audio_file = debra_song_audio_file  # <- change here
@@ -37,7 +37,7 @@ print(descriptors.shape)
 
 baby_driver_descriptors_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/baby_driver_audio_descriptors.bin"
 opening_song_descriptors_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/opening_song_descriptors.bin"
-debra_song_descriptors_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/debra_song_descriptors.bin"
+debra_song_descriptors_file = "debra_song_descriptors.bin"
 # descriptors_file = sys.argv[2]
 
 descriptors_file = debra_song_descriptors_file  # <- change here
