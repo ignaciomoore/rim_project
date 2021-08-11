@@ -1,58 +1,102 @@
 
+import numpy
+
+class Neighbours:
+    
+    def __init__(self, neighbour_matrix):
+        self.neighbour_matrix = neighbour_matrix
+
+    def shape(self):
+        return self.neighbour_matrix.shape
+
+    def search(self, song_index):
+        if song_index >= self.shape()[0]:
+            return 0
+        return self.neighbour_matrix[song_index]
+        
+    
 class Candidate:
-    sequence_duration = 0
-    missing_descriptors = 0
-    found_descriptors = 0
-    missing_streak = 0
 
     def __init__(self, song_descriptor_index, movie_descriptor_index, sample_rate):
         self.song_descriptor_index = song_descriptor_index
         self.movie_descriptor_index = movie_descriptor_index
-        self.next_movie_descriptor_index = movie_descriptor_index + 1
+
         self.song_sequence_start_time = self.song_descriptor_index / sample_rate
         self.movie_sequence_start_time = self.movie_descriptor_index / sample_rate
 
-    def find_next(self, neighbours_list):
-        if self.next_movie_descriptor_index in neighbours_list:
+        self.next_song_descriptor_index = song_descriptor_index + 1
+        self.next_movie_descriptor_index = movie_descriptor_index + 1
+        self.sequence_duration = 0
+        self.missing_descriptors = 0
+        self.found_descriptors = 0
+        self.missing_streak = 0
+
+    def movie_end_index(self):
+        return self.movie_descriptor_index + self.sequence_duration
+
+    def song_end_index(self):
+        return self.song_descriptor_index + self.sequence_duration
+
+    def find_next(self, neighbours_list: "Neighbours", missing_streak_limit):
+        neighbours = neighbours_list.search(self.next_song_descriptor_index)
+        if type(neighbours) == int:
+            return self
+        if self.next_movie_descriptor_index in neighbours:
             self.missing_streak = 0
             self.found_descriptors += 1
         else:
             self.missing_streak += 1
             self.missing_descriptors += 1
+        
+        self.next_song_descriptor_index += 1
         self.next_movie_descriptor_index += 1
         self.sequence_duration += 1
 
+        if self.missing_streak >= missing_streak_limit:
+            return self
+        else:
+            return self.find_next(neighbours_list, missing_streak_limit)
+
+    def offset(self):
+        return self.movie_descriptor_index - self.song_descriptor_index
+
     def offset_diff(self, other):
-        return abs((other.movie_descriptor_index - other.song_descriptor_index) -
-                   (self.movie_descriptor_index - self.song_descriptor_index))
+        return abs(self.offset() - other.offset())
 
-    def contains(self, other):
-        if (self.song_descriptor_index <= other.song_descriptor_index) and \
-                (self.movie_descriptor_index <= other.movie_descriptor_index) and \
-                (self.song_descriptor_index + self.sequence_duration >=
-                 other.song_descriptor_index + other.sequence_duration) and \
-                (self.movie_descriptor_index + self.sequence_duration >=
-                 other.movie_descriptor_index + other.sequence_duration):
-            return True
-        else:
-            return False
+    def contains(self, other: "Candidate"):
+        movie_is_contained = self.movie_descriptor_index <= other.movie_descriptor_index and other.movie_end_index() <= self.movie_end_index()
+        song_is_contained = self.song_descriptor_index <= other.song_descriptor_index and other.song_end_index() <= self.song_end_index()
+        return movie_is_contained and song_is_contained
 
-    def distance(self, other):
-        if (self.song_descriptor_index in range(other.song_descriptor_index,
-                                                other.song_descriptor_index + other.sequence_duration) or
-                (self.song_descriptor_index + self.sequence_duration in range(other.song_descriptor_index,
-                                                                              other.song_descriptor_index + other.sequence_duration)) or
-                (other.song_descriptor_index in range(self.song_descriptor_index,
-                                                      self.song_descriptor_index + self.sequence_duration)) or
-                (other.song_descriptor_index + other.sequence_duration in range(self.song_descriptor_index,
-                                                                                self.song_descriptor_index + self.sequence_duration))):
+    def distance(self, other: "Candidate"):
+        closest_start = numpy.clip(self.song_descriptor_index, other.song_descriptor_index, other.song_end_index())
+        closest_end = numpy.clip(self.song_end_index(), other.song_descriptor_index, other.song_end_index())
+        return min(abs(self.song_descriptor_index - closest_start), abs(self.song_end_index() - closest_end))
+
+    def combine(self, other: "Candidate"):
+        if self.contains(other) or other.contains(self):
+            return
+        
+        offset_self = self.offset()
+        offset_other = other.offset()
+
+        self.sequence_duration = max(self.song_end_index, other.song_end_index) - min(self.song_descriptor_index, other.song_descriptor_index)
+        self.song_descriptor_index = min(self.song_descriptor_index, other.song_descriptor_index)
+        other.sequence_duration = self.sequence_duration
+        other.song_descriptor_index = self.song_descriptor_index
+
+        self.movie_descriptor_index = self.song_descriptor_index + offset_self
+        other.movie_descriptor_index = other.song_descriptor_index + offset_other
+
+        return
+        
+    def score(self):
+        if self.found_descriptors < 3:
             return 0
-        else:
-            return abs(min((other.song_descriptor_index - self.song_descriptor_index + self.sequence_duration),
-                           (self.song_descriptor_index - other.song_descriptor_index + other.sequence_duration)))
+        return self.found_descriptors / max(1, self.missing_descriptors - self.missing_streak)
 
-    def combine(self, other):
-        combination = Candidate(min(self.song_descriptor_index, other.song_descriptor_index),
-                                min(self.movie_descriptor_index, other.movie_descriptor_index))
-        combination.sequence_duration = self.sequence_duration + other.sequence_duration - self.offset_diff(other)
-        return combination
+    def __str__(self):
+        return f'{self.song_descriptor_index} {self.movie_descriptor_index} {self.sequence_duration} {self.score():.1f}'
+
+    def __repr__(self):
+        return str(self)
