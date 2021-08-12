@@ -17,12 +17,12 @@ class Neighbours:
     
 class Candidate:
 
-    def __init__(self, song_descriptor_index, movie_descriptor_index, sample_rate):
+    def __init__(self, song_descriptor_index, movie_descriptor_index, descriptors_per_second):
         self.song_descriptor_index = song_descriptor_index
         self.movie_descriptor_index = movie_descriptor_index
 
-        self.song_sequence_start_time = self.song_descriptor_index / sample_rate
-        self.movie_sequence_start_time = self.movie_descriptor_index / sample_rate
+        self.song_sequence_start_time = self.song_descriptor_index / descriptors_per_second
+        self.movie_sequence_start_time = self.movie_descriptor_index / descriptors_per_second
 
         self.next_song_descriptor_index = song_descriptor_index + 1
         self.next_movie_descriptor_index = movie_descriptor_index + 1
@@ -80,7 +80,9 @@ class Candidate:
         offset_self = self.offset()
         offset_other = other.offset()
 
-        self.sequence_duration = max(self.song_end_index, other.song_end_index) - min(self.song_descriptor_index, other.song_descriptor_index)
+        self_end = self.song_end_index()
+        other_end = other.song_end_index()
+        self.sequence_duration = max(self_end, other_end) - min(self.song_descriptor_index, other.song_descriptor_index)
         self.song_descriptor_index = min(self.song_descriptor_index, other.song_descriptor_index)
         other.sequence_duration = self.sequence_duration
         other.song_descriptor_index = self.song_descriptor_index
