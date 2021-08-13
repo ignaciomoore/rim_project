@@ -37,7 +37,7 @@ class Candidate:
     def song_end_index(self):
         return self.song_descriptor_index + self.sequence_duration
 
-    def find_next(self, neighbours_list: "Neighbours", missing_streak_limit, min_sequence_duration):
+    def find_next(self, neighbours_list: "Neighbours", missing_streak_limit):
         neighbours = neighbours_list.search(self.next_song_descriptor_index)
         if type(neighbours) == int:
             return self
@@ -54,10 +54,8 @@ class Candidate:
 
         if self.missing_streak >= missing_streak_limit:
             return self
-        elif self.sequence_duration >= min_sequence_duration:
-            return self
         else:
-            return self.find_next(neighbours_list, missing_streak_limit, min_sequence_duration)
+            return self.find_next(neighbours_list, missing_streak_limit)
 
     def offset(self):
         return self.movie_descriptor_index - self.song_descriptor_index
