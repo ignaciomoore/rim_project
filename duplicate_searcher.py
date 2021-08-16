@@ -99,6 +99,16 @@ class Candidate:
             return 0
         return self.found_descriptors / max(1, self.missing_descriptors - self.missing_streak)
 
+    def avg_distance(self, distances):
+        distance = []
+        song_indexes = range(self.song_descriptor_index, self.song_end_index()+1)
+        movie_indexes = range(self.movie_descriptor_index, self.movie_end_index()+1)
+        if len(song_indexes) != len(movie_indexes):
+            print("    Not the same length")
+        for i in range(len(song_indexes)):
+            distance.append(distances[song_indexes[i]][movie_indexes[i]])
+        self.avg_distance = round(sum(distance)/len(distance), 2)
+
     def __str__(self):
         return f'{self.song_descriptor_index} {self.movie_descriptor_index} {self.sequence_duration} {self.score():.1f}'
 
