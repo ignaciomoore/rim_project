@@ -7,56 +7,11 @@ import datetime
 import matplotlib.pyplot as plt
 
 
-opening_song_descriptors_file = "opening_song_descriptors.bin"
-debra_song_descriptors_file = "debra_song_descriptors.bin"
-song_descriptors_file = opening_song_descriptors_file  # <- change here
-
-movie_audio_descriptors_file = "baby_driver_audio_descriptors.bin"
-
-
-opening_song_shape = (3416, 32)
-debra_song_shape = (3698, 32)
-
-song_shape = opening_song_shape  # <- change here
-movie_audio_shape = (72780, 32)
-
-"""
-song_descriptors_file = sys.argv[1]
-movie_audio_descriptors_file = sys.argv[3]
-
-song_shape = (int(sys.argv[2]), 32)
-movie_audio_shape = (int(sys.argv[4]), 32)
-"""
-
-t2 = time.time()
-song_descriptors = numpy.fromfile(song_descriptors_file, sep="\n").reshape(song_shape)
-movie_audio_descriptors = numpy.fromfile(movie_audio_descriptors_file, sep="\n").reshape(movie_audio_shape)
-t3 = time.time()
-
-print(f"Reading {round(t3-t2, 2)} secs")
-
-t0 = time.time()
-distances = distance.cdist(song_descriptors, movie_audio_descriptors)
-t1 = time.time()
-
-print(f"Distances {distances.shape} {round(t1-t0, 2)} secs")
-
-
 def get_k_smallest_distance(k, distances, min_dist, current_k):
     if current_k == k:
         return distances[distances > min_dist].min()
     new_min_dist = distances[distances > min_dist].min()
     return numpy.append(new_min_dist, get_k_smallest_distance(k, distances, new_min_dist, current_k + 1))
-
-
-"""
-t5 = time.time()
-minimum_distance = numpy.amin(distances)
-# minimum_distance = get_k_smallest_distance(1, distances)
-t6 = time.time()
-location = numpy.where(distances == numpy.amin(distances))
-t7 = time.time()
-"""
 
 
 def audio_second(sample_rate, window, descriptor_index):  # if hop == window
@@ -110,61 +65,51 @@ def get_min_dist_seq(distances, min_dist, seq_len, max_acc_dif, iteration, iprin
     return min_dist, neigh_coords_list, attempts
 
 
-"""
-listOfCordinates = list(zip(location[0], location[1]))
+def add_offset_to_index(offset_threshold, index, offset):
+    if index >= offset_threshold:
+        return index + (offset*2)
+    return index
 
-print(f"Minimum distance {minimum_distance} {t6-t5}")
-print(f"Locations {t7-t6}")
 
+def get_closest_neighbours(song_index, num_of_neighs, distance_matrix, min_offset):
+    offset_range = ((song_index - min_offset) % distance_matrix.shape[1], (song_index + min_offset) % distance_matrix.shape[1])
+    switch = True
+    
+    if offset_range[0] < offset_range[1]:
+        start_neighs = distance_matrix[song_index][:offset_range[0]]
+        end_neighs = distance_matrix[song_index][offset_range[1]:]
+        new_neighs = numpy.append(start_neighs, end_neighs)
+    else:
+        new_neighs = distance_matrix[song_index][offset_range[1]:offset_range[0]]
 
-for cord in listOfCordinates:
-    print(f"{cord} | {audio_second(44100, 4096, cord[0])} song sec | {audio_second(44100, 4096, cord[1])} movie sec") 
+    results = numpy.argpartition(new_neighs, num_of_neighs)[:num_of_neighs]
+    new_results = []
+    for i in range(len(results)):
+        if switch:
+            offset_threshold = offset_range[1]
+            new_results.append(add_offset_to_index(offset_threshold, results[i], min_offset))
+        else:
+            offset_threshold = offset_range[0]
+            new_results.append(add_offset_to_index(offset_threshold, results[i], min_offset))
 
-min_2_dist = distances[distances > minimum_distance].min()
-loc_2 = numpy.where(distances == min_2_dist)
-print(f"Dist = {min_2_dist}, loc = {loc_2}")
-"""
-minimum_distance_threshold = 0
-seq_seconds = 5
-seq_len = descriptor_seconds(seq_seconds, sample_rate=44100, window=4096)
-print(f"{seq_len} descriptors in the sequence")
-maximum_accepted_distance = 500
+    return numpy.array(new_results)
 
-min_dist, neigh_coords_list, attempts = get_min_dist_seq(distances, minimum_distance_threshold, seq_len, maximum_accepted_distance, 1)
-print(f"Min Dist {min_dist} | Num Attempts {attempts}")
-for cord in neigh_coords_list:
-    print(f"{cord} | {audio_second(44100, 4096, cord[0])} song sec | {audio_second(44100, 4096, cord[1])} movie sec")
+import subprocess
 
-"""
-t20 = time.time()
-distances_array = distances.flatten()
-t21 = time.time()
-print(f"Flatten {round(t21-t20, 2)} secs")
-print(distances_array.shape)
-# numpy.histogram(distances)
+def play_result(video_file, results,  descriptors_per_second, index=0):
+    index = int(input("Please enter match index: "))
+    cand = results[index]
+    song_init_tmstmp = str(datetime.timedelta(seconds=int(cand.song_descriptor_index / descriptors_per_second)))
+    duration = str(datetime.timedelta(seconds=int(cand.sequence_duration / descriptors_per_second)))
+    movie_init_tmstmp = str(datetime.timedelta(seconds=int(cand.movie_descriptor_index / descriptors_per_second)))
 
-plt.hist(distances_array, bins='auto')  # arguments are passed to np.histogram
-plt.title("Histogram with 'auto' bins")
-plt.show()
-"""
-"""
-k = 50
+    command = ["ffplay", "-ss", song_init_tmstmp, "-i", video_file, "-t", duration]
+    code = subprocess.call(command, shell=True)
+    if code != 0:
+        raise Exception("ERROR!")
 
-t10 = time.time()
-min_k_dists = get_k_smallest_distance(k, distances, 0, 1)
-t11 = time.time()
+    command = ["ffplay", "-ss", movie_init_tmstmp, "-i", video_file, "-t", duration]
+    code = subprocess.call(command, shell=True)
+    if code != 0:
+        raise Exception("ERROR!")
 
-print(f"Min {k} distances = {min_k_dists} | {round(t11-t10)} secs")
-
-locations = []
-for min_dist in min_k_dists:
-    locations.append(numpy.where(distances == min_dist))
-
-i = 0
-for location in locations:
-    i += 1
-    listOfCordinates = list(zip(location[0], location[1]))
-    print(f"Values for min {i} distance")
-    for cord in listOfCordinates:
-        print(f"    {cord} | {audio_second(44100, 4096, cord[0])} song sec | {audio_second(44100, 4096, cord[1])} movie sec")
-"""

@@ -1,5 +1,5 @@
 
-from os import sep
+import os
 import sys
 import librosa
 import time
@@ -11,34 +11,31 @@ def create_audio_descriptors(audio_file, sample_rate, dimension, window, hop):
     return mfcc.transpose()
 
 
-"""
-def get_descriptors(video_file, sample_rate, dimension, window, hop, audio_folder):
-    audio_file = extract_audio(video_file, sample_rate, audio_folder)
+if __name__ == "__main__":
+
+    # python audio_descriptor_generator.py {audio path} {descriptor file name}
+
+    audio_file = sys.argv[1]
+
+    sample_rate = 22000  # 44100
+    descriptors_per_second = 2
+    window = int(sample_rate / descriptors_per_second)  # 4096
+    hop = window  # 4096
+    dimension = 32
+
+    t0 = time.time()
     descriptors = create_audio_descriptors(audio_file, sample_rate, dimension, window, hop)
-    return descriptors
-"""
+    t1 = time.time()
 
-baby_driver_audio_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/baby_driver_audio.22000.wav"
-debra_song_audio_file = "debra_song.22000.wav"
-opening_song_audio_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/opening_song.44100.wav"
-# audio_file = sys.argv[1]
-audio_file = debra_song_audio_file  # <- change here
+    print(f"{round(t1 - t0, 2)} seconds")
+    print(descriptors.shape)
 
-sample_rate = 22000  # 44100
-window = 2200  # 4096
-hop = 2200  # 4096
-dimension = 32
-t0 = time.time()
-descriptors = create_audio_descriptors(audio_file, sample_rate, dimension, window, hop)
-t1 = time.time()
+    descriptor_paths = "descriptors"
 
-print(f"{round(t1 - t0, 2)} seconds")
-print(descriptors.shape)
+    if not os.path.isdir(descriptor_paths):
+        os.mkdir(descriptor_paths)
+    
+    descriptors_file = f"{sys.argv[2]}_{descriptors_per_second}_{descriptors.shape[0]}.bin"
 
-baby_driver_descriptors_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/baby_driver_audio_descriptors.bin"
-opening_song_descriptors_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/opening_song_descriptors.bin"
-debra_song_descriptors_file = "debra_song_descriptors.bin"
-# descriptors_file = sys.argv[2]
-
-descriptors_file = debra_song_descriptors_file  # <- change here
-descriptors.tofile(descriptors_file, sep="\n")
+    descriptors.tofile(f"{descriptor_paths}/{descriptors_file}", sep="\n")
+    print(f"File: {descriptor_paths}/{descriptors_file}")

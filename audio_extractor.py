@@ -16,24 +16,19 @@ def extract_audio(video_file, sample_rate, audio_folder):
         raise Exception("ERROR!")
     return file
 
+if __name__ == "__main__":
 
-baby_driver_video_file = "C:/Users/iggym/Documents/Movies/Baby Driver (2017) [YTS.AG]/Baby.Driver.2017.720p.BluRay.x264-[YTS.AG].mp4"
-baby_driver_audio_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/baby_driver_audio"
+    # python audio_extractor.py {video path} {audio name}
 
-# video_path = "C:/Users/iggym/Documents/Movies/Baby Driver (2017) [YTS.AG]/Soundtrack/[ONTIVA.COM] Jon Spencer Blues Explosion - Bell Bottoms ( Baby driver soundtrack)-144p.mp4"
-# audio_path = "opening_song"
+    video_path = sys.argv[1]
+    audio_name = sys.argv[2]
 
-# video_path = sys.argv[1]
-# audio_path = sys.argv[2]
+    sample_rate = 22000  # <- change here
+    audio_paths = "audios"
 
-debra_song_video_file = "C:/Users/iggym/Documents/Movies/Baby Driver (2017) [YTS.AG]/Soundtrack/[ONTIVA.COM] Debra-144p.mp4"
-debra_song_audio_file = "C:/Users/iggym/Documents/Recuperacion de Informacion Multimedia/rim_project/debra_song"
+    if not os.path.isdir(audio_paths):
+        os.mkdir(audio_paths)
 
-video_path = debra_song_video_file  # <- change here
-audio_path = debra_song_audio_file  # <- change here
+    audio = extract_audio(video_path, sample_rate, f"{audio_paths}/{audio_name}")
 
-sample_rate = 22000  # <- change here
-
-audio = extract_audio(video_path, sample_rate, audio_path)
-
-print(f"Audio extracted: {audio}")
+    print(f"Audio extracted: {audio_paths}/{audio_name}")
