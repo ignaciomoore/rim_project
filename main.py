@@ -2,12 +2,16 @@ import time
 import sys
 import numpy
 from scipy.spatial import distance
+from prettytable import PrettyTable
+import datetime
 
+from song_searcher import play_result
 from duplicate_searcher import Candidate
+from duplicate_searcher import Neighbours
+from song_searcher import get_closest_neighbours
 
 
-
-if __name__ == "__main__":
+def run_process():
 
     """ READING DESCRIPTORS """
 
@@ -38,9 +42,6 @@ if __name__ == "__main__":
     print(f"    Distances {distances.shape} | {round(t1-t0, 2)} secs")
 
     """ GET NEIGHBOURS """
-
-    from duplicate_searcher import Neighbours
-    from song_searcher import get_closest_neighbours
 
     print("Obtaining closest neighbours ...")
 
@@ -191,27 +192,28 @@ if __name__ == "__main__":
         match.avg_distance(distances)
 
     sorted_and_filtered = sorted(filtered_copies, key=lambda c: c.avg_distance)
+    return sorted_and_filtered, descriptors_per_second
+
+    
+if __name__ == "__main__":
 
     """ SHOW SEQUENCES """
 
-    import datetime
-
     # Debra starts in aprox. 0:41:30
-    add_cut = 0
-
+    
     # It worked, the second and third sequence work, 2:01:12 - 2:01:16 | 2:01:48 - 2:01:52 star wars
-
-    from prettytable import PrettyTable 
     
     # Specify the Column Names while initializing the Table 
     myTable = PrettyTable(["Index", "Song Seconds", "Movie Seconds", "Avg Distance", "Score"])
 
+    sorted_and_filtered, descriptors_per_second = run_process()
+
     index = 0
     for match in sorted_and_filtered:
-        song_start_secs = str(datetime.timedelta(seconds=int((match.song_descriptor_index + add_cut) / descriptors_per_second)))
-        song_end_secs = str(datetime.timedelta(seconds=int((match.song_end_index() + add_cut) / descriptors_per_second)))
-        movie_start_secs = str(datetime.timedelta(seconds=int((match.movie_descriptor_index + add_cut) / descriptors_per_second)))
-        movie_end_secs = str(datetime.timedelta(seconds=int((match.movie_end_index() + add_cut) / descriptors_per_second)))
+        song_start_secs = str(datetime.timedelta(seconds=int((match.song_descriptor_index) / descriptors_per_second)))
+        song_end_secs = str(datetime.timedelta(seconds=int((match.song_end_index()) / descriptors_per_second)))
+        movie_start_secs = str(datetime.timedelta(seconds=int((match.movie_descriptor_index) / descriptors_per_second)))
+        movie_end_secs = str(datetime.timedelta(seconds=int((match.movie_end_index()) / descriptors_per_second)))
         avg_distance = match.avg_distance    
 
         myTable.add_row([index, f"{song_start_secs} - {song_end_secs}", f"{movie_start_secs} - {movie_end_secs}", avg_distance, match.score()])
@@ -219,8 +221,6 @@ if __name__ == "__main__":
         index += 1
 
     print(myTable)
-
-    from song_searcher import play_result
 
     watch_results = input("Watch results [y/n]: ")
     if watch_results == "y":
