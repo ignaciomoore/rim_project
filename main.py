@@ -11,41 +11,76 @@ from duplicate_searcher import Neighbours
 from song_searcher import get_closest_neighbours
 
 
-def run_process():
+def run_process(descriptors_file, seq_len="", num_neighs="", same_audio=True):
 
     """ READING DESCRIPTORS """
 
-    print("Reading descriptors ...")
+    print("Reading descriptors ...", end="\r")
 
-    descriptors_file_path = sys.argv[1]
-    info_extractor = descriptors_file_path.split("_")
-    number_of_descriptors = int(info_extractor[-1].split(".")[0])
-    descriptors_per_second = int(info_extractor[-2])
+    if same_audio:
+        descriptors_file_path = descriptors_file
+        info_extractor = descriptors_file_path.split("_")
+        number_of_descriptors = int(info_extractor[-1].split(".")[0])
+        descriptors_per_second = int(info_extractor[-2])
 
-    t0 = time.time()
+        t0 = time.time()
+        
+        descriptors_shape = (number_of_descriptors, 32)
+
+        descriptors = numpy.fromfile(descriptors_file_path, sep="\n").reshape(descriptors_shape)
+        t1 = time.time()
+
+        print(f"    Descriptors {descriptors.shape} | {round(t1-t0, 2)} secs", end="\r")
     
-    descriptors_shape = (number_of_descriptors, 32)
+    else:
+        descriptors_file_path_1 = descriptors_file[0]
+        info_extractor_1 = descriptors_file_path_1.split("_")
+        number_of_descriptors_1 = int(info_extractor_1[-1].split(".")[0])
+        descriptors_per_second = int(info_extractor_1[-2])
 
-    descriptors = numpy.fromfile(descriptors_file_path, sep="\n").reshape(descriptors_shape)
-    t1 = time.time()
+        t0 = time.time()
+        
+        descriptors_shape_1 = (number_of_descriptors_1, 32)
 
-    print(f"    Descriptors {descriptors.shape} | {round(t1-t0, 2)} secs")
+        descriptors_1 = numpy.fromfile(descriptors_file_path_1, sep="\n").reshape(descriptors_shape_1)
+        t1 = time.time()
+
+        print(f"    Descriptors {descriptors_1.shape} | {round(t1-t0, 2)} secs", end="\r")
+
+        descriptors_file_path_2 = descriptors_file[1]
+        info_extractor_2 = descriptors_file_path_2.split("_")
+        number_of_descriptors_2 = int(info_extractor_2[-1].split(".")[0])
+
+        t0 = time.time()
+        
+        descriptors_shape_2 = (number_of_descriptors_2, 32)
+
+        descriptors_2 = numpy.fromfile(descriptors_file_path_2, sep="\n").reshape(descriptors_shape_2)
+        t1 = time.time()
+
+        print(f"    Descriptors {descriptors_2.shape} | {round(t1-t0, 2)} secs", end="\r")
 
     """ CALCULATE DISTANCES """
 
     print("Calculating distances ...")
 
     t0 = time.time()
-    distances = distance.cdist(descriptors, descriptors)
+    if same_audio:
+        distances = distance.cdist(descriptors, descriptors)
+    else:
+        distances = distance.cdist(descriptors_1, descriptors_2)
     t1 = time.time()
 
-    print(f"    Distances {distances.shape} | {round(t1-t0, 2)} secs")
+    print(f"    Distances {distances.shape} | {round(t1-t0, 2)} secs", end="\r")
 
     """ GET NEIGHBOURS """
 
-    print("Obtaining closest neighbours ...")
+    print("Obtaining closest neighbours ...", end="\r")
 
-    number_of_neighbours = 10
+    if num_neighs != "":
+        number_of_neighbours = int(num_neighs)
+    else:
+        number_of_neighbours = 10
     min_offset_seconds = 60
     min_offset_descriptors = min_offset_seconds * descriptors_per_second
 
@@ -55,16 +90,19 @@ def run_process():
     
     for i in range(distances.shape[0]):
         print(f"    Progress: {round((i/total)*100, 2)}%", end="\r")
-        neighs = get_closest_neighbours(i, number_of_neighbours, distances, min_offset_descriptors)
+        if same_audio:
+            neighs = get_closest_neighbours(i, number_of_neighbours, distances, min_offset_descriptors)
+        else:
+            neighs = numpy.argpartition(distances[i], number_of_neighbours)[:number_of_neighbours]
         neighbours.append(neighs)
     
     t11 = time.time()
     neighbours = Neighbours(numpy.array(neighbours))
-    print(f"    Neighbours {neighbours.shape()} | {round(t11-t10, 2)} secs")
+    print(f"    Neighbours {neighbours.shape()} | {round(t11-t10, 2)} secs", end="\r")
 
     """ CREATE CANDIDATES """
 
-    print("Creating candidates ...")
+    print("Creating candidates ...", end="\r")
 
     candidates = []
     song_indexes = range(distances.shape[0])
@@ -74,21 +112,26 @@ def run_process():
         for neighbour in neighbours.search(song):
             candidates.append(Candidate(song, neighbour, descriptors_per_second))
 
-    print(f"    Candidates {len(candidates)}")
+    print(f"    Candidates {len(candidates)}", end="\r")
 
     """ FIND SEQUENCE """
 
-    print("Finding sequences ...")
+    print("Finding sequences ...", end="\r")
 
     copies = []
 
     max_missing_streak_secs = 1
     max_missing_streak = max_missing_streak_secs * descriptors_per_second
-    min_duration_seconds = 3
+    
+    if seq_len != "":
+        min_duration_seconds = int(seq_len)
+    else:
+        min_duration_seconds = 3
     min_duration = min_duration_seconds * descriptors_per_second
 
     total_candidates = len(candidates)
     t0 = time.time()
+    
     for i in range(len(candidates)):
         print(f"    Progress {round((i/total_candidates)*100, 2)}%", end="\r")
         cand = candidates[i]
@@ -96,11 +139,11 @@ def run_process():
         if current_candidate.sequence_duration >= min_duration and current_candidate.score() >= 1:
             copies.append(current_candidate)
     t1 = time.time()
-    print(f"    Sequences {len(copies)} | {round(t1-t0, 2)} secs")   
+    print(f"    Sequences {len(copies)} | {round(t1-t0, 2)} secs", end="\r")   
 
     """ CONTAIN """
 
-    print("Contain ...")
+    print("Contain ...", end="\r")
 
     filtered = []
 
@@ -121,15 +164,15 @@ def run_process():
         if add:
             filtered.append(cani)
 
-    print(f"    {len(filtered)}")
+    print(f"    {len(filtered)}", end="\r")
 
     """ SORT AND COMBINE """
 
-    print("Sort and combine ...")
+    print("Sort and combine ...", end="\r")
 
     sorted_candidates = sorted(filtered, key=lambda c: c.song_descriptor_index)
 
-    print(f"    {len(sorted_candidates)}")
+    print(f"    {len(sorted_candidates)}", end="\r")
 
     max_offset_secs = 2
     max_offset = max_offset_secs * descriptors_per_second
@@ -144,11 +187,11 @@ def run_process():
             if (copy_i.distance(copy_j) <= max_combine_distance) and (copy_i.offset_diff(copy_j) <= max_offset):
                 copy_i.combine(copy_j)
 
-    print(f"    {len(sorted_candidates)}")
+    print(f"    {len(sorted_candidates)}", end="\r")
 
     """ OVERLAPPED """
 
-    print("Overlaping ...")
+    print("Overlaping ...", end="\r")
 
     repeated = set()
     off_set_diff_limit_secs = 10
@@ -161,7 +204,7 @@ def run_process():
         for j in range(i + 1, len(sorted_candidates)):
             copy_j = sorted_candidates[j]
 
-            if copy_i.distance(copy_j) <= max_overlap_distance and copy_i.offset_diff(copy_j) <= off_set_diff_limit_secs:
+            if copy_i.distance(copy_j) <= max_overlap_distance and copy_i.offset_diff(copy_j) <= off_set_diff_limit:
                 if copy_i.sequence_duration >= copy_j.sequence_duration:
                     repeated.add(copy_j)
                 else:
@@ -170,11 +213,11 @@ def run_process():
     for copy in repeated:
         sorted_candidates.remove(copy)
 
-    print(f"    {len(sorted_candidates)}")
+    print(f"    {len(sorted_candidates)}", end="\r")
 
     """ DELETE SHORT COPIES """
 
-    print("Deleting short copies ...")
+    print("Deleting short copies ...", end="\r")
     
     filtered_copies = []
 
@@ -182,31 +225,23 @@ def run_process():
         if copy.sequence_duration > min_duration:
             filtered_copies.append(copy)
 
-    print(f"    {len(filtered_copies)}")
+    print(f"    {len(filtered_copies)}", end="\r")
 
     """ GET AVERAGE DISTANCES """
 
-    print("Calculating average distances ...")
+    print("Calculating average distances ...", end="\r")
 
     for match in filtered_copies:
         match.avg_distance(distances)
 
     sorted_and_filtered = sorted(filtered_copies, key=lambda c: c.avg_distance)
+    print("Done", end="\r")
     return sorted_and_filtered, descriptors_per_second
 
-    
-if __name__ == "__main__":
-
-    """ SHOW SEQUENCES """
-
-    # Debra starts in aprox. 0:41:30
-    
-    # It worked, the second and third sequence work, 2:01:12 - 2:01:16 | 2:01:48 - 2:01:52 star wars
-    
-    # Specify the Column Names while initializing the Table 
+def show_results(descriptors_file, seq_len, num_neighs):
     myTable = PrettyTable(["Index", "Song Seconds", "Movie Seconds", "Avg Distance", "Score"])
 
-    sorted_and_filtered, descriptors_per_second = run_process()
+    sorted_and_filtered, descriptors_per_second = run_process(descriptors_file, seq_len, num_neighs)
 
     index = 0
     for match in sorted_and_filtered:
@@ -230,3 +265,14 @@ if __name__ == "__main__":
         while True:
             play_result(video_file, sorted_and_filtered, descriptors_per_second)
             print(myTable)
+
+    
+if __name__ == "__main__":
+
+    # python main.py {descriptor path} {seq len} {num neighs}
+
+    """ SHOW SEQUENCES """ 
+
+    if len(sys.argv) > 2:
+        show_results(sys.argv[2], sys.argv[3], sys.argv[4])
+    

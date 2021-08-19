@@ -5,6 +5,7 @@ from scipy.spatial import distance
 import time
 import datetime
 import matplotlib.pyplot as plt
+import subprocess
 
 
 def get_k_smallest_distance(k, distances, min_dist, current_k):
@@ -94,7 +95,6 @@ def get_closest_neighbours(song_index, num_of_neighs, distance_matrix, min_offse
 
     return numpy.array(new_results)
 
-import subprocess
 
 def play_result(video_file, results,  descriptors_per_second, index=0):
     index = int(input("Please enter match index: "))

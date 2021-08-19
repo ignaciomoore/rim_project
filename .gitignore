@@ -1,3 +1,9 @@
 *.wav
 *.bin
 *.zip
+*.mp4
+*.mp3
+venv/
+__pycache__/
+.idea/
+movies/
